@@ -52,12 +52,12 @@
 TIM_HandleTypeDef htim16;
 
 /* USER CODE BEGIN PV */
-// TODO: Define any input variables
-static uint8_t patterns[] = 
+// Define any input variables
+static uint8_t patterns[] = // led patterns
   {0b10101010, 0b01010101, 0b11001100, 0b00110011, 0b11110000, 0b00001111};
-static uint16_t address = 0;
-static uint8_t delay_state = 0;
-static uint32_t tim16_arr_values[] = {15000, 7500};
+static uint16_t address = 0; // EEPROM address
+static uint8_t delay_state = 0; // records current state of timer delay
+static uint32_t tim16_arr_values[] = {15000, 7500}; // timer arr values
 
 
 
@@ -110,14 +110,14 @@ int main(void)
   MX_TIM16_Init();
   /* USER CODE BEGIN 2 */
 
-  // TODO: Start timer TIM16
+  // Start timer TIM16
   HAL_TIM_Base_Start_IT(&htim16);
 
 
-  // TODO: Write all "patterns" to EEPROM using SPI
-  for (uint16_t i = 0; i <6; i++)
+  // Write all "patterns" to EEPROM using SPI
+  for (uint16_t i = 0; i <6; i++) // loop 6 addresses
   {
-    write_to_address(i, patterns[i]);
+    write_to_address(i, patterns[i]); // write to eeprom
   }
 
 
@@ -131,18 +131,18 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 
-	// TODO: Check button PA0; if pressed, change timer delay
+	// Check button PA0; if pressed, change timer delay
   
   
-  if (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0))
+  if (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0)) // check PA0 pressed
     {
       
-      if (++delay_state == 2)
+      if (++delay_state == 2) // increment to other delay state
       {
         delay_state = 0;
       }
 
-      TIM16->ARR = tim16_arr_values[delay_state];
+      TIM16->ARR = tim16_arr_values[delay_state]; // change tim16 arr
 
     }
   
@@ -452,31 +452,26 @@ void TIM16_IRQHandler(void)
 	// Acknowledge interrupt
 	HAL_TIM_IRQHandler(&htim16);
 
-  uint8_t led_data = read_from_address(address);
-
-
+  uint8_t led_data = read_from_address(address); // read data from eeprom
   
-  
-  if (led_data == patterns[address])
+  if (led_data == patterns[address]) // if read from spi is correct
   {
-    GPIOB->ODR &= 1111111100000000;
-    GPIOB->ODR |= (uint16_t)led_data;
+    GPIOB->ODR &= 1111111100000000; // reset leds
+    GPIOB->ODR |= (uint16_t)led_data; // set to new pattern
   }
-  else
+  else // data from eeprom incorrect
   {
-    GPIOB->ODR &= 1111111100000000;
-    GPIOB->ODR |= 0b0000000000000001;
+    GPIOB->ODR &= 1111111100000000; // reset leds
+    GPIOB->ODR |= 0b0000000000000001; // set error code
   }
   
 
-  if (++address == 6)
+  if (++address == 6) // increment to next address
   {
-    address = 0;
+    address = 0; // loop back to zero
   }
 
-  HAL_TIM_Base_Start_IT(&htim16);
-
-	// TODO: Change to next LED pattern; output 0x01 if the read SPI data is incorrect
+  HAL_TIM_Base_Start_IT(&htim16); // restart timer
   
 }
 
