@@ -57,7 +57,7 @@ static uint8_t patterns[] = // led patterns
   {0b10101010, 0b01010101, 0b11001100, 0b00110011, 0b11110000, 0b00001111};
 static uint16_t address = 0; // EEPROM address
 static uint8_t delay_state = 0; // records current state of timer delay
-static uint32_t tim16_arr_values[] = {15000, 7500}; // timer arr values
+static uint32_t tim16_arr_values[] = {999, 499}; // timer arr values
 
 
 
@@ -114,7 +114,7 @@ int main(void)
   HAL_TIM_Base_Start_IT(&htim16);
 
 
-  // Write all "patterns" to EEPROM using SPI
+  // Write all "patterns" to EEPROM usinggy SPI
   for (uint16_t i = 0; i <6; i++) // loop 6 addresses
   {
     write_to_address(i, patterns[i]); // write to eeprom
@@ -127,25 +127,25 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    /* USER CODE END WHILE */
-
-    /* USER CODE BEGIN 3 */
-
-	// Check button PA0; if pressed, change timer delay
   
+  // Check button PA0; if pressed, change timer delay
   
-  if (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0)) // check PA0 pressed
+  if (!HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0)) // check PA0 pressed
     {
       
       if (++delay_state == 2) // increment to other delay state
       {
         delay_state = 0;
       }
-
-      TIM16->ARR = tim16_arr_values[delay_state]; // change tim16 arr
+      __HAL_TIM_SET_AUTORELOAD(&htim16, tim16_arr_values[delay_state]); 
+      // change tim16 arr
 
     }
-  
+    
+    /* USER CODE END WHILE */
+
+    /* USER CODE BEGIN 3 */
+
   }
   /* USER CODE END 3 */
 }
@@ -451,6 +451,7 @@ void TIM16_IRQHandler(void)
 {
 	// Acknowledge interrupt
 	HAL_TIM_IRQHandler(&htim16);
+  HAL_TIM_Base_Start_IT(&htim16); // restart timer
 
   uint8_t led_data = read_from_address(address); // read data from eeprom
   
@@ -470,9 +471,6 @@ void TIM16_IRQHandler(void)
   {
     address = 0; // loop back to zero
   }
-
-  HAL_TIM_Base_Start_IT(&htim16); // restart timer
-  
 }
 
 /* USER CODE END 4 */
